@@ -8,7 +8,10 @@ from solana.rpc.types import TxOpts
 from solana.publickey import PublicKey
 from solana.keypair import Keypair
 from solana.transaction import Transaction
+from solana.system_program import SYS_PROGRAM_ID
+from spl.token.constants import ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID
 from spl.token.instructions import get_associated_token_address, create_associated_token_account
+from solana.rpc.core import RPCException
 
 from usdc_swaps import route_map
 
