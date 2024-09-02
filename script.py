@@ -31,56 +31,53 @@ def get_route_map():
 
 async def get_coin_quote(INPUT_MINT, TOKEN_MINT, amount):
     # Get PAIR QUOTE
-    url = f'https://quote-api.jup.ag/v1/quote?inputMint={INPUT_MINT}&outputMint={TOKEN_MINT}&amount={amount}&slippage=0.5'
+    url = f"https://quote-api.jup.ag/v1/quote?inputMint={INPUT_MINT}&outputMint={TOKEN_MINT}&amount={amount}&slippage=0.5"
     async with httpx.AsyncClient() as client:
-        r = await client.get(url, timeout=15.0)
-        return r.json()
-
+        response = await client.get(url, timeout=15.0)
+    return response.json()
 
 async def get_coin_swap_quote(route):
     # Get PAIR SWAP QUOTE
     async with httpx.AsyncClient() as client:
-        r = await client.post(
-            url='https://quote-api.jup.ag/v1/swap',
-            json={
-                'route': route,
-                'userPublicKey': str(WALLET.public_key),
-                'wrapUnwrapSOL': False
-            },
-            timeout=15.0
+        response = await client.post(
+        url="https://quote-api.jup.ag/v1/swap",
+        json={
+        "route": route,
+        "userPublicKey": str(WALLET.public_key),
+        "wrapUnwrapSOL": False
+        },
+        timeout=15.0
         )
-        return r.json()
+    return response.json()
 
-
-async def execute_trancation(transacx):
+async def execute_transaction(transactions):
     # Execute transactions
     opts = TxOpts(skip_preflight=True, max_retries=11)
-    for tx_name, raw_transaction in transacx.items():
+    for tx_name, raw_transaction in transactions.items():
         if raw_transaction:
             try:
                 transaction = Transaction.deserialize(base64.b64decode(raw_transaction))
                 await SOLANA_CLIENT.send_transaction(transaction, WALLET, opts=opts)
             except Exception as e:
-                print("Error occured at ex tx: ", str(e))
+                print("Error occurred at ex tx: ", str(e))
                 return str(e)
-
 
 async def serialized_swap_transaction(usdcToTokenRoute, tokenToUsdcRoute):
     if usdcToTokenRoute:
         try:
             usdcToTokenTransaction = await get_coin_swap_quote(usdcToTokenRoute)
-            await execute_trancation(usdcToTokenTransaction)
+            await execute_transaction(usdcToTokenTransaction)
         except Exception as e:
-            print("Error occured at execution usdctotoken: ", str(e))
+            print("Error occurred at execution usdctotoken: ", str(e))
             return str(e)
 
-        if tokenToUsdcRoute:
-            try:
-                tokenToUsdcTransaction = await get_coin_swap_quote(tokenToUsdcRoute)
-                await execute_trancation(tokenToUsdcTransaction)
-            except Exception as e:
-                print("Error occured at execution tokentousdc: ", str(e))
-                return str(e)
+    if tokenToUsdcRoute:
+        try:
+            tokenToUsdcTransaction = await get_coin_swap_quote(tokenToUsdcRoute)
+            await execute_transaction(tokenToUsdcTransaction)
+        except Exception as e:
+            print("Error occurred at execution tokentousdc: ", str(e))
+            return str(e)
 
 
 async def _create_associated_token_account(token):
